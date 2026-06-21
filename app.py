@@ -45,7 +45,7 @@ ALPHA           = 0.5     # gesprek vs. smaakprofiel
 RATING_WEIGHT   = 0.15    # lichte community-rating-nudge
 
 # --- LLM-backend: wissel lokaal <-> OpenAI met deze regel 
-LLM_BACKEND = "openai"            # "ollama" (lokaal, gratis) | "openai"
+LLM_BACKEND = "ollama"            # "ollama" (lokaal, gratis) | "openai"
 
 LLM_BACKENDS = {
     "ollama": {"base_url": "http://localhost:11434/v1",
@@ -79,7 +79,7 @@ rec = Recommender(collection, model, reviews_collection=reviews_collection)
 _src = "split (notes+reviews)" if reviews_collection is not None else "notes-only"
 print(f"Klaar: {len(rec.catalog):,} parfums | retrieval: {_src}.")
 
-llm = OpenAI(base_url=_LLM["base_url"], api_key=_LLM["api_key"])
+llm = OpenAI(base_url=_LLM["base_url"], api_key=_LLM["api_key"] or "missing")  # geen lege key -> client crasht niet; call faalt netjes
 print(f"LLM-backend: {LLM_BACKEND} ({LLM_MODEL})")
 
 ADVISOR_SYS = (
