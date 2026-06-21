@@ -59,6 +59,10 @@ _LLM      = LLM_BACKENDS[LLM_BACKEND]
 LLM_MODEL = _LLM["model"]
 
 # startup
+# Zorg dat relative paden (./chroma_db, ./models, static) altijd kloppen, ongeacht
+# vanuit welke map de app gestart wordt (tunnel/service/achtergrond).
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 print("Embedding-model laden...")
 model = SentenceTransformer(EMBED_MODEL)
 
