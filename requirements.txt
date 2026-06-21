@@ -1,0 +1,26 @@
+# Fragrance recommender — dependencies
+# Python 3.13. Torch is CPU-only in deze omgeving; voor fine-tunen (zie
+# finetune_embeddings.py) is een CUDA-build van torch nodig.
+
+# --- core / retrieval ---
+pandas
+numpy
+chromadb
+sentence-transformers
+rank-bm25
+
+# --- web app (app.py) ---
+fastapi
+uvicorn
+
+# --- LLM-laag (lokale Ollama via OpenAI-compatible client) ---
+openai
+
+# --- optioneel: embeddings fine-tunen (finetune_embeddings.py) ---
+# 'datasets' is vereist door sentence-transformers' fit(); torch met CUDA voor GPU.
+datasets
+
+# --- notebook (alleen de kernel; VS Code levert de notebook-UI) ---
+# 'jupyter'/'jupyterlab' bewust weggelaten: die struikelen op Windows over de
+# 260-tekens padlimiet. Wil je ze toch? Zet Windows Long Paths aan.
+ipykernel

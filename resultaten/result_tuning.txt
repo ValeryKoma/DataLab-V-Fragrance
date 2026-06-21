@@ -1,0 +1,116 @@
+C:\Users\alr3m\Documents\GitHub\DataLab-V-Fragrance\finetune_embeddings.py:39: DeprecationWarning: Importing from 'sentence_transformers.evaluation' is deprecated and will be removed in a future version. Please use 'sentence_transformers.sentence_transformer.evaluation' instead.
+  from sentence_transformers.evaluation import InformationRetrievalEvaluator
+CUDA: True NVIDIA GeForce RTX 5050 Laptop GPU
+52,256 parfums met reviews | train 51,256 | eval (held-out) 1,000
+169,756 (review -> passage) trainingsparen
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights: 100%|████████████████████████████████████████████████████████████| 199/199 [00:00<00:00, 10644.08it/s]
+BertModel LOAD REPORT from: BAAI/bge-base-en-v1.5
+Key                     | Status     |  |
+------------------------+------------+--+-
+embeddings.position_ids | UNEXPECTED |  |
+
+Notes:
+- UNEXPECTED:   can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+
+BASELINE (BAAI/bge-base-en-v1.5) Recall@10: 0.416
+   (eval-metric keys: ['frag_cosine_recall@1', 'frag_cosine_recall@5', 'frag_cosine_recall@10'] )
+hard negatives minen...
+Found 140506 unique queries out of 169756 total queries.
+Found an average of 1.208 positives per query.
+Batches: 100%|███████████████████████████████████████████████████████████████████████| 201/201 [01:49<00:00,  1.83it/s]
+Batches: 100%|███████████████████████████████████████████████████████████████████████| 549/549 [09:38<00:00,  1.05s/it]
+Querying FAISS index: 100%|██████████████████████████████████████████████████████████████| 9/9 [00:33<00:00,  3.74s/it]
+Negative candidates mined, preparing dataset...
+Metric       Positive       Negative     Difference
+Count         140,749        140,749
+Mean           0.6188         0.6544        -0.0357
+Median         0.6153         0.6577        -0.0422
+Std            0.0803         0.0422         0.0611
+Min            0.1838         0.3385        -0.3080
+25%            0.5664         0.6331        -0.0813
+50%            0.6153         0.6577        -0.0422
+75%            0.6715         0.6807         0.0062
+Max            0.9000         0.8402         0.2300
+Skipped 24 potential negatives (0.00%) due to the max_score of 0.85.
+train-kolommen: ['anchor', 'positive', 'negative']
+loss: CachedMNRL (mini_batch=16, effectief batch=128)
+The `warmup_ratio` argument is deprecated in Transformers v5+, and will also be removed from Sentence Transformers once support for Transformers v4 is dropped. Since you're using Transformers v5+, please use `warmup_steps` (as a float) to specify the warmup ratio instead.
+{'loss': '4.038', 'grad_norm': '7.917', 'learning_rate': '4.455e-06', 'epoch': '0.04545'}
+{'loss': '2.914', 'grad_norm': '7.009', 'learning_rate': '9e-06', 'epoch': '0.09091'}
+{'loss': '2.571', 'grad_norm': '7.043', 'learning_rate': '1.355e-05', 'epoch': '0.1364'}
+{'loss': '2.409', 'grad_norm': '6.632', 'learning_rate': '1.809e-05', 'epoch': '0.1818'}
+{'loss': '2.334', 'grad_norm': '7.69', 'learning_rate': '1.971e-05', 'epoch': '0.2273'}
+{'loss': '2.332', 'grad_norm': '7.59', 'learning_rate': '1.92e-05', 'epoch': '0.2727'}
+{'loss': '2.173', 'grad_norm': '7.206', 'learning_rate': '1.87e-05', 'epoch': '0.3182'}
+{'loss': '2.139', 'grad_norm': '6.511', 'learning_rate': '1.819e-05', 'epoch': '0.3636'}
+{'loss': '2.112', 'grad_norm': '6.897', 'learning_rate': '1.769e-05', 'epoch': '0.4091'}
+{'loss': '2.082', 'grad_norm': '6.636', 'learning_rate': '1.718e-05', 'epoch': '0.4545'}
+{'loss': '2.043', 'grad_norm': '6.743', 'learning_rate': '1.668e-05', 'epoch': '0.5'}
+{'loss': '2.045', 'grad_norm': '6.983', 'learning_rate': '1.617e-05', 'epoch': '0.5455'}
+{'loss': '1.998', 'grad_norm': '6.724', 'learning_rate': '1.567e-05', 'epoch': '0.5909'}
+{'loss': '1.98', 'grad_norm': '6.575', 'learning_rate': '1.516e-05', 'epoch': '0.6364'}
+{'loss': '1.962', 'grad_norm': '6.409', 'learning_rate': '1.466e-05', 'epoch': '0.6818'}
+{'loss': '1.949', 'grad_norm': '6.447', 'learning_rate': '1.415e-05', 'epoch': '0.7273'}
+{'loss': '1.951', 'grad_norm': '6.659', 'learning_rate': '1.365e-05', 'epoch': '0.7727'}
+{'loss': '1.902', 'grad_norm': '6.152', 'learning_rate': '1.314e-05', 'epoch': '0.8182'}
+{'loss': '1.915', 'grad_norm': '6.437', 'learning_rate': '1.264e-05', 'epoch': '0.8636'}
+{'loss': '1.92', 'grad_norm': '6.186', 'learning_rate': '1.213e-05', 'epoch': '0.9091'}
+{'loss': '1.897', 'grad_norm': '6.595', 'learning_rate': '1.163e-05', 'epoch': '0.9545'}
+{'loss': '1.913', 'grad_norm': '7.497', 'learning_rate': '1.112e-05', 'epoch': '1'}
+{'eval_frag_cosine_accuracy@1': '0.464', 'eval_frag_cosine_accuracy@10': '0.633', 'eval_frag_cosine_precision@1': '0.464', 'eval_frag_cosine_precision@5': '0.1172', 'eval_frag_cosine_precision@10': '0.0633', 'eval_frag_cosine_recall@1': '0.464', 'eval_frag_cosine_recall@5': '0.586', 'eval_frag_cosine_recall@10': '0.633', 'eval_frag_cosine_ndcg@10': '0.5433', 'eval_frag_cosine_mrr@10': '0.5153', 'eval_frag_cosine_map@10': '0.5153', 'eval_runtime': '5.945', 'eval_samples_per_second': '0', 'eval_steps_per_second': '0', 'epoch': '1'}
+Writing model shards: 100%|██████████████████████████████████████████████████████████████| 1/1 [00:00<00:00,  2.79it/s]
+{'loss': '1.788', 'grad_norm': '6.381', 'learning_rate': '1.062e-05', 'epoch': '1.045'}
+{'loss': '1.737', 'grad_norm': '6.12', 'learning_rate': '1.011e-05', 'epoch': '1.091'}
+{'loss': '1.755', 'grad_norm': '6.207', 'learning_rate': '9.606e-06', 'epoch': '1.136'}
+{'loss': '1.721', 'grad_norm': '6.799', 'learning_rate': '9.101e-06', 'epoch': '1.182'}
+{'loss': '1.739', 'grad_norm': '7.113', 'learning_rate': '8.596e-06', 'epoch': '1.227'}
+{'loss': '1.723', 'grad_norm': '5.961', 'learning_rate': '8.091e-06', 'epoch': '1.273'}
+{'loss': '1.74', 'grad_norm': '6.469', 'learning_rate': '7.586e-06', 'epoch': '1.318'}
+{'loss': '1.717', 'grad_norm': '6.371', 'learning_rate': '7.081e-06', 'epoch': '1.364'}
+{'loss': '1.734', 'grad_norm': '6.298', 'learning_rate': '6.576e-06', 'epoch': '1.409'}
+{'loss': '1.685', 'grad_norm': '6.048', 'learning_rate': '6.071e-06', 'epoch': '1.455'}
+{'loss': '1.726', 'grad_norm': '7.109', 'learning_rate': '5.566e-06', 'epoch': '1.5'}
+{'loss': '1.712', 'grad_norm': '6.1', 'learning_rate': '5.061e-06', 'epoch': '1.545'}
+{'loss': '1.723', 'grad_norm': '6.728', 'learning_rate': '4.556e-06', 'epoch': '1.591'}
+{'loss': '1.709', 'grad_norm': '6.644', 'learning_rate': '4.051e-06', 'epoch': '1.636'}
+{'loss': '1.696', 'grad_norm': '6.661', 'learning_rate': '3.545e-06', 'epoch': '1.682'}
+{'loss': '1.713', 'grad_norm': '6.325', 'learning_rate': '3.04e-06', 'epoch': '1.727'}
+{'loss': '1.711', 'grad_norm': '5.955', 'learning_rate': '2.535e-06', 'epoch': '1.773'}
+{'loss': '1.669', 'grad_norm': '6.786', 'learning_rate': '2.03e-06', 'epoch': '1.818'}
+{'loss': '1.695', 'grad_norm': '6.11', 'learning_rate': '1.525e-06', 'epoch': '1.864'}
+{'loss': '1.698', 'grad_norm': '6.282', 'learning_rate': '1.02e-06', 'epoch': '1.909'}
+{'loss': '1.709', 'grad_norm': '6.122', 'learning_rate': '5.152e-07', 'epoch': '1.955'}
+{'loss': '1.653', 'grad_norm': '7.862', 'learning_rate': '1.01e-08', 'epoch': '2'}
+{'eval_frag_cosine_accuracy@1': '0.47', 'eval_frag_cosine_accuracy@10': '0.63', 'eval_frag_cosine_precision@1': '0.47', 'eval_frag_cosine_precision@5': '0.1176', 'eval_frag_cosine_precision@10': '0.063', 'eval_frag_cosine_recall@1': '0.47', 'eval_frag_cosine_recall@5': '0.588', 'eval_frag_cosine_recall@10': '0.63', 'eval_frag_cosine_ndcg@10': '0.5469', 'eval_frag_cosine_mrr@10': '0.5207', 'eval_frag_cosine_map@10': '0.5207', 'eval_runtime': '5.303', 'eval_samples_per_second': '0', 'eval_steps_per_second': '0', 'epoch': '2'}
+Writing model shards: 100%|██████████████████████████████████████████████████████████████| 1/1 [00:00<00:00,  1.80it/s]
+{'train_runtime': '4945', 'train_samples_per_second': '56.92', 'train_steps_per_second': '0.445', 'train_loss': '1.962', 'epoch': '2'}
+Loading weights: 100%|████████████████████████████████████████████████████████████| 199/199 [00:00<00:00, 10635.81it/s]
+100%|████████████████████████████████████████████████████████████████████████████| 2200/2200 [1:22:25<00:00,  2.25s/it]
+
+BASELINE   Recall@10: 0.416
+FINE-TUNED Recall@10: 0.633
+Writing model shards: 100%|██████████████████████████████████████████████████████████████| 1/1 [00:00<00:00,  3.40it/s]
+opgeslagen in ./models/bge-fragrance-v2
+PS C:\Users\alr3m\Documents\GitHub\DataLab-V-Fragrance> python -c "import chromadb; c=chromadb.PersistentClient(path='./chroma_db'); [c.delete_collection(n) for n in ('fragrances_notes','fragrances_reviews')]; print('deleted')"
+deleted
+PS C:\Users\alr3m\Documents\GitHub\DataLab-V-Fragrance> python build_collections.py
+Loading weights: 100%|████████████████████████████████████████████████████████████| 199/199 [00:00<00:00, 11151.93it/s]
+Bron fragrances_ft: 85,122 parfums
+catalogus geladen: 85,122
+parfums met ruwe reviews: 55,152
+cross-perfume dup reviews verwijderd: 445
+parfums met bruikbare reviews: 53,820
+  notes: 500/85,122
+  notes: 10,500/85,122
+  notes: 20,500/85,122
+  notes: 30,500/85,122
+  notes: 40,500/85,122
+  notes: 50,500/85,122
+  notes: 60,500/85,122
+  notes: 70,500/85,122
+  notes: 80,500/85,122
+fragrances_notes: klaar (85,122 docs)
+  reviews: 20,000 docs...
+  reviews: 40,000 docs...
+  reviews: 60,000 docs...

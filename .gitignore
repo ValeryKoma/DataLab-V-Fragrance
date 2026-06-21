@@ -1,2 +1,13 @@
 *.csv
 *.pkl
+chroma_db/
+models/
+config.py
+config
+.env
+*.key
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+*.bak
+*.ipynb.bak
