@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fragrance Advisor</title>
+<style>
+  :root {
+    --bg:#f5f3f7; --panel:#fff; --ink:#221b29; --muted:#7d7588;
+    --line:#eae3ee; --line-2:#f1ecf3;
+    --accent:#a8557d; --accent-d:#8c3f64; --accent-tint:#f8eef4;
+    --r1:#d1495b; --r2:#dd7a55; --r3:#9a93a0; --r4:#5f9e7a; --r5:#3f8f63;
+    --radius:16px; --radius-s:11px;
+    --shadow:0 1px 2px rgba(34,27,41,.04), 0 12px 32px rgba(34,27,41,.06);
+  }
+  * { box-sizing:border-box; }
+  html { -webkit-text-size-adjust:100%; }
+  body {
+    margin:0; color:var(--ink);
+    font-family:"Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+    background:
+      radial-gradient(1200px 500px at 80% -10%, #f0e3ec 0%, rgba(240,227,236,0) 60%),
+      var(--bg);
+    line-height:1.5;
+  }
+  .wrap { max-width:880px; margin:0 auto; padding:40px 20px 80px; }
+
+  /* header */
+  header { margin-bottom:28px; }
+  h1 { font-weight:700; font-size:1.9rem; letter-spacing:-.02em; margin:0 0 6px; }
+  .sub { color:var(--muted); margin:0; max-width:60ch; }
+
+  /* cards */
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+          padding:22px; margin-bottom:22px; box-shadow:var(--shadow); }
+  .card-head { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+  .step { flex:none; width:28px; height:28px; border-radius:50%; display:grid; place-items:center;
+          background:var(--accent-tint); color:var(--accent-d); font-weight:700; font-size:.9rem; }
+  .card-head h2 { margin:0; font-size:1.1rem; font-weight:650; }
+  .card-head .note { margin-left:auto; color:var(--muted); font-size:.85rem; }
+
+  /* forms */
+  label { font-size:.9rem; }
+  .field { position:relative; }
+  .field svg.lead { position:absolute; left:13px; top:50%; transform:translateY(-50%);
+                    color:var(--muted); pointer-events:none; }
+  input[type=text], textarea, select {
+    font:inherit; color:var(--ink); width:100%; background:#fff;
+    border:1px solid var(--line); border-radius:var(--radius-s); padding:12px 14px;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  .field input[type=text] { padding-left:40px; }
+  input[type=text]:focus, textarea:focus, select:focus {
+    outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-tint);
+  }
+  textarea { resize:none; min-height:46px; max-height:160px; }
+  select { appearance:none; padding-right:34px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%237d7588' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 12px center; cursor:pointer; }
+
+  .row { display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; }
+  .grow { flex:1; min-width:200px; }
+  .stack { display:flex; flex-direction:column; gap:6px; }
+  .lbl { font-size:.8rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+
+  /* buttons */
+  button { font:inherit; cursor:pointer; border:1px solid transparent; border-radius:var(--radius-s);
+           background:none; color:inherit; transition:background .15s, border-color .15s, color .15s, transform .05s; }
+  button:active { transform:translateY(1px); }
+  button:disabled { opacity:.5; cursor:default; }
+  .btn { padding:12px 18px; font-weight:600; }
+  .btn.primary { background:var(--accent); color:#fff; }
+  .btn.primary:hover:not(:disabled) { background:var(--accent-d); }
+  .btn.ghost { background:#fff; border-color:var(--line); color:var(--ink); }
+  .btn.ghost:hover:not(:disabled) { border-color:var(--accent); color:var(--accent-d); }
+  .btn-text { padding:6px 10px; font-size:.85rem; font-weight:600; color:var(--muted); border-radius:8px; }
+  .btn-text:hover:not(:disabled) { background:var(--line-2); color:var(--accent-d); }
+  .btn-text:disabled { opacity:.4; }
+  .card-head .btn-text { margin-left:auto; }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+
+  /* segmented rating */
+  .seg-group { display:inline-flex; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:#fff; }
+  .seg-group .seg { padding:9px 0; width:44px; font-weight:650; color:var(--muted);
+                    border-right:1px solid var(--line-2); }
+  .seg-group .seg:last-child { border-right:none; }
+  .seg-group .seg:hover { background:var(--line-2); }
+  .seg-group .seg.active { color:#fff; }
+  .seg-group .seg.active[data-v="1"]{ background:var(--r1); }
+  .seg-group .seg.active[data-v="2"]{ background:var(--r2); }
+  .seg-group .seg.active[data-v="3"]{ background:var(--r3); }
+  .seg-group .seg.active[data-v="4"]{ background:var(--r4); }
+  .seg-group .seg.active[data-v="5"]{ background:var(--r5); }
+  .seg-group.mini .seg { width:30px; padding:6px 0; font-size:.85rem; }
+
+  .rating-scale { display:flex; justify-content:space-between; max-width:240px; margin:8px 2px 0;
+                  font-size:.78rem; color:var(--muted); }
+  .rating-scale .lo { color:var(--r1); font-weight:600; }
+  .rating-scale .hi { color:var(--r5); font-weight:600; }
+
+  /* search results */
+  .results { list-style:none; margin:12px 0 0; padding:0; max-height:230px; overflow:auto;
+             border:1px solid var(--line); border-radius:var(--radius-s); display:none; }
+  .results.show { display:block; }
+  .results li { padding:11px 14px; cursor:pointer; display:flex; justify-content:space-between;
+                gap:12px; align-items:center; border-bottom:1px solid var(--line-2); }
+  .results li:last-child { border-bottom:none; }
+  .results li:hover { background:var(--accent-tint); }
+  .results .add { color:var(--accent-d); font-size:.82rem; font-weight:600; white-space:nowrap; }
+
+  /* profile chips */
+  .chips { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+  .chip { display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+          background:#fcfafc; border:1px solid var(--line); border-radius:var(--radius-s); padding:10px 12px; }
+  .chip .name { flex:1; min-width:140px; font-weight:600; }
+  .chip .x { flex:none; width:30px; height:30px; border-radius:8px; color:var(--muted);
+             display:grid; place-items:center; }
+  .chip .x:hover { background:#fbe9ec; color:var(--r1); }
+  .empty { color:var(--muted); font-size:.88rem; margin:14px 0 0; }
+
+  /* balance slider */
+  .balance { background:#fcfafc; border:1px solid var(--line); border-radius:var(--radius-s); padding:14px 16px; }
+  .balance-head { display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+  .balance-head .label { font-weight:600; font-size:.92rem; }
+  .balance-head .readout { font-size:.82rem; color:var(--accent-d); font-weight:600;
+                           background:var(--accent-tint); padding:3px 9px; border-radius:20px; }
+  input[type=range] { -webkit-appearance:none; appearance:none; width:100%; height:6px; margin:14px 0 6px;
+                      border-radius:6px; background:linear-gradient(90deg, var(--accent) 0%, var(--accent) 50%, var(--line) 50%, var(--line) 100%);
+                      background-size:100% 100%; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:20px; height:20px; border-radius:50%;
+                      background:#fff; border:2px solid var(--accent); box-shadow:0 1px 4px rgba(0,0,0,.15); cursor:pointer; }
+  input[type=range]::-moz-range-thumb { width:18px; height:18px; border-radius:50%; background:#fff;
+                      border:2px solid var(--accent); cursor:pointer; }
+  .balance-ends { display:flex; justify-content:space-between; font-size:.8rem; color:var(--muted); }
+  .balance .hint { margin:10px 0 0; }
+
+  .hint { color:var(--muted); font-size:.85rem; }
+
+  /* chat */
+  .chat { height:380px; overflow:auto; display:flex; flex-direction:column; gap:12px; padding:4px; }
+  .chat-empty { margin:auto; text-align:center; color:var(--muted); max-width:34ch; font-size:.9rem; }
+  .msg { max-width:86%; padding:11px 14px; border-radius:16px; white-space:pre-wrap; line-height:1.5; }
+  .msg.user { align-self:flex-end; background:var(--accent); color:#fff; border-bottom-right-radius:5px; }
+  .msg.bot  { align-self:flex-start; background:#f1ecf1; color:var(--ink); border-bottom-left-radius:5px; }
+  .msg.bot strong { color:var(--accent-d); }
+  .typing { display:inline-flex; gap:4px; align-items:center; }
+  .typing span { width:7px; height:7px; border-radius:50%; background:var(--muted); opacity:.5;
+                 animation:blink 1.2s infinite both; }
+  .typing span:nth-child(2){ animation-delay:.2s; } .typing span:nth-child(3){ animation-delay:.4s; }
+  @keyframes blink { 0%,80%,100%{ opacity:.3; transform:translateY(0);} 40%{ opacity:1; transform:translateY(-3px);} }
+
+  /* recommendation cards */
+  .recs { display:grid; gap:12px; margin-top:4px; }
+  .rec { border:1px solid var(--line); border-radius:var(--radius-s); padding:13px 15px; background:#fff; }
+  .rec .t { font-weight:700; }
+  .rec .meta { color:var(--muted); font-size:.82rem; margin:3px 0; text-transform:capitalize; }
+  .rec .notes { font-size:.9rem; margin:6px 0 8px; }
+  .rec a { color:var(--accent-d); text-decoration:none; font-size:.84rem; font-weight:600;
+           display:inline-flex; align-items:center; gap:5px; }
+  .rec a:hover { text-decoration:underline; }
+
+  .composer { display:flex; gap:10px; align-items:flex-end; margin-top:14px; }
+  .controls { display:flex; gap:16px; align-items:flex-end; flex-wrap:wrap; margin-top:4px; }
+
+  @media (max-width:560px){
+    .wrap { padding:24px 14px 60px; }
+    .btn { padding:11px 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Fragrance Advisor</h1>
+    <p class="sub">Rate a few perfumes you already know, then chat about what you want. Your
+      ratings and your description together steer the recommendations.</p>
+  </header>
+
+  <!-- STEP 1 -->
+  <section class="card">
+    <div class="card-head">
+      <span class="step">1</span>
+      <h2>Your taste</h2>
+      <span class="note">optional, but improves results</span>
+    </div>
+
+    <div class="row">
+      <div class="grow field">
+        <svg class="lead" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input id="search" type="text" placeholder="Search a perfume you know (e.g. Dior Sauvage)" autocomplete="off">
+      </div>
+      <div class="stack">
+        <span class="lbl">Rating</span>
+        <div id="ratingPick" class="seg-group" role="group" aria-label="Rating to apply when adding">
+          <button class="seg" data-v="1">1</button>
+          <button class="seg" data-v="2">2</button>
+          <button class="seg" data-v="3">3</button>
+          <button class="seg" data-v="4">4</button>
+          <button class="seg" data-v="5">5</button>
+        </div>
+      </div>
+    </div>
+    <div class="rating-scale"><span class="lo">1–2 · steer away</span><span>3 · neutral</span><span class="hi">4–5 · steer toward</span></div>
+
+    <ul id="results" class="results"></ul>
+    <div id="profile" class="chips"></div>
+    <p class="empty" id="profileHint">No perfumes added yet.</p>
+  </section>
+
+  <!-- STEP 2 -->
+  <section class="card">
+    <div class="card-head">
+      <span class="step">2</span>
+      <h2>Chat</h2>
+      <button id="reset" class="btn-text" type="button">Reset chat</button>
+    </div>
+
+    <div id="chat" class="chat"></div>
+
+    <div class="controls">
+      <div class="stack">
+        <span class="lbl">Recommend for</span>
+        <select id="gender">
+          <option value="">Anyone</option>
+          <option value="women">Women</option>
+          <option value="men">Men</option>
+          <option value="unisex">Unisex</option>
+        </select>
+      </div>
+      <div class="stack grow">
+        <div class="balance">
+          <div class="balance-head">
+            <span class="label">Recommendation balance</span>
+            <span class="readout" id="alphaReadout">50% chat · 50% taste</span>
+          </div>
+          <input id="alpha" type="range" min="0" max="1" step="0.1" value="0.5">
+          <div class="balance-ends"><span>Your rated perfumes</span><span>What you describe</span></div>
+          <p class="hint">Slide left to lean on the perfumes you rated, right to lean on what you
+            type in chat. The middle blends both. (Only the chat side applies if you haven't rated anything.)</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="composer">
+      <textarea id="msg" rows="1" placeholder="e.g. something fresh for the office, nothing sweet"></textarea>
+      <button id="send" class="btn primary">Send</button>
+      <button id="now" class="btn ghost">Recommend now</button>
+    </div>
+    <p class="hint" style="margin-top:10px">The advisor asks a couple of questions, then recommends from the catalog based on your taste and chat.</p>
+  </section>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+let profile = [];          // [{id, rating, label}]
+let history = [];          // [{role, content}]
+let currentRating = 4;
+
+const EXT_ICON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M9 7h8v8"/></svg>`;
+
+// ---------- rating picker (step 1) ----------
+function updateRatingPick() {
+  $$("#ratingPick .seg").forEach(b => b.classList.toggle("active", +b.dataset.v === currentRating));
+}
+$$("#ratingPick .seg").forEach(b => b.addEventListener("click", () => {
+  currentRating = +b.dataset.v; updateRatingPick();
+}));
+updateRatingPick();
+
+// ---------- search ----------
+let timer = null;
+$("#search").addEventListener("input", e => {
+  clearTimeout(timer);
+  const q = e.target.value.trim();
+  if (q.length < 2) { hideResults(); return; }
+  timer = setTimeout(() => doSearch(q), 250);
+});
+document.addEventListener("click", e => {
+  if (!e.target.closest("#search") && !e.target.closest("#results")) hideResults();
+});
+
+async function doSearch(q) {
+  try {
+    const r = await fetch("/api/search?q=" + encodeURIComponent(q));
+    const items = await r.json();
+    const ul = $("#results");
+    if (!items.length) { hideResults(); return; }
+    ul.innerHTML = items.map(it =>
+      `<li data-id="${it.id}" data-label="${escapeAttr(it.label)}">
+         <span>${escapeHtml(it.label)}</span><span class="add">Add at ${currentRating}/5</span></li>`).join("");
+    ul.classList.add("show");
+  } catch { hideResults(); }
+}
+function hideResults() { const ul = $("#results"); ul.innerHTML = ""; ul.classList.remove("show"); }
+
+$("#results").addEventListener("click", e => {
+  const li = e.target.closest("li"); if (!li) return;
+  const { id, label } = li.dataset;
+  profile = profile.filter(p => p.id !== id).concat([{ id, rating: currentRating, label }]).slice(0, 6);
+  $("#search").value = ""; hideResults();
+  renderProfile();
+});
+
+// ---------- profile ----------
+function ratingSeg(id, current) {
+  return `<div class="seg-group mini" data-id="${id}">` +
+    [1,2,3,4,5].map(v => `<button class="seg ${v===current?"active":""}" data-v="${v}">${v}</button>`).join("") +
+    `</div>`;
+}
+function renderProfile() {
+  $("#profile").innerHTML = profile.map(p => `
+    <div class="chip">
+      <span class="name">${escapeHtml(p.label)}</span>
+      ${ratingSeg(p.id, p.rating)}
+      <button class="x" data-id="${p.id}" aria-label="Remove" title="Remove">&times;</button>
+    </div>`).join("");
+  $("#profileHint").textContent = profile.length
+    ? `${profile.length} perfume${profile.length>1?"s":""} in your profile — adjust a rating any time.`
+    : "No perfumes added yet.";
+}
+$("#profile").addEventListener("click", e => {
+  const seg = e.target.closest(".seg-group.mini .seg");
+  if (seg) {
+    const id = seg.parentElement.dataset.id, p = profile.find(x => x.id === id);
+    if (p) { p.rating = +seg.dataset.v; renderProfile(); }
+    return;
+  }
+  const x = e.target.closest(".x");
+  if (x) { profile = profile.filter(p => p.id !== x.dataset.id); renderProfile(); }
+});
+
+// ---------- balance slider ----------
+$("#alpha").addEventListener("input", e => {
+  const a = Math.round(parseFloat(e.target.value) * 100);
+  $("#alphaReadout").textContent = `${a}% chat · ${100 - a}% taste`;
+  e.target.style.background =
+    `linear-gradient(90deg, var(--accent) 0%, var(--accent) ${a}%, var(--line) ${a}%, var(--line) 100%)`;
+});
+
+// ---------- chat ----------
+$("#send").addEventListener("click", () => sendChat(false));
+$("#now").addEventListener("click", () => sendChat(true));
+const msgBox = $("#msg");
+msgBox.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChat(false); }
+});
+msgBox.addEventListener("input", () => {
+  msgBox.style.height = "auto"; msgBox.style.height = Math.min(msgBox.scrollHeight, 160) + "px";
+});
+$("#reset").addEventListener("click", () => {
+  history = [];                       // alleen het gesprek; smaakprofiel blijft staan
+  msgBox.value = ""; msgBox.style.height = "auto";
+  renderChat();                       // toont weer de lege-staat placeholder
+  msgBox.focus();
+});
+
+async function sendChat(force) {
+  const text = msgBox.value.trim();
+  if (!force && !text) return;
+  if (text) { history.push({ role: "user", content: text }); }
+  msgBox.value = ""; msgBox.style.height = "auto";
+  renderChat();
+  setBusy(true);
+  const thinking = addThinking();
+  try {
+    const r = await fetch("/api/chat", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profile, history, message: "", force,
+        gender: $("#gender").value || null, alpha: parseFloat($("#alpha").value) })
+    });
+    const data = await r.json();
+    history = data.history;
+    thinking.remove();
+    renderChat(data.recommendations);
+  } catch {
+    thinking.remove();
+    addMsg("bot", "Could not reach the server. Is app.py running?");
+  } finally {
+    setBusy(false);
+  }
+}
+
+function renderChat(recs) {
+  const c = $("#chat"); c.innerHTML = "";
+  $("#reset").disabled = !history.length;
+  if (!history.length) {
+    c.innerHTML = `<p class="chat-empty">Tell me the occasion, the season, or notes you love or
+      want to avoid — or just hit "Recommend now".</p>`;
+    return;
+  }
+  history.forEach(m => addMsg(m.role === "user" ? "user" : "bot", m.content, false));
+  if (recs && recs.length) addRecs(recs);
+  c.scrollTop = c.scrollHeight;
+}
+
+function addMsg(kind, text, scroll = true) {
+  const d = document.createElement("div");
+  d.className = "msg " + kind;
+  d.innerHTML = mdLite(text);
+  $("#chat").appendChild(d);
+  if (scroll) $("#chat").scrollTop = $("#chat").scrollHeight;
+  return d;
+}
+function addThinking() {
+  const d = document.createElement("div");
+  d.className = "msg bot";
+  d.innerHTML = `<span class="typing"><span></span><span></span><span></span></span>`;
+  $("#chat").appendChild(d); $("#chat").scrollTop = $("#chat").scrollHeight;
+  return d;
+}
+function addRecs(recs) {
+  const wrap = document.createElement("div");
+  wrap.className = "recs";
+  wrap.innerHTML = recs.map(r => `
+    <div class="rec">
+      <div class="t">${escapeHtml(r.title || "")}</div>
+      <div class="meta">${escapeHtml(r.brand || "")}${r.gender ? " · " + escapeHtml(r.gender) : ""}</div>
+      <div class="notes">${escapeHtml((r.notes || "").slice(0, 130))}</div>
+      ${r.url ? `<a href="${escapeAttr(r.url)}" target="_blank" rel="noopener">View on Fragrantica ${EXT_ICON}</a>` : ""}
+    </div>`).join("");
+  $("#chat").appendChild(wrap);
+  $("#chat").scrollTop = $("#chat").scrollHeight;
+}
+function setBusy(b) { $("#send").disabled = b; $("#now").disabled = b; }
+
+// ---------- helpers ----------
+function escapeHtml(s) { return (s || "").replace(/[&<>"]/g, c =>
+  ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c])); }
+function escapeAttr(s) { return escapeHtml(s).replace(/'/g, "&#39;"); }
+function mdLite(s) {
+  return escapeHtml(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>");
+}
+
+renderChat();
+</script>
+</body>
+</html>
