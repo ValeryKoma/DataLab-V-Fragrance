@@ -11,3 +11,6 @@ __pycache__/
 .ipynb_checkpoints/
 *.bak
 *.ipynb.bak
+build_logboek_docx.py
+Logboek_Michal.docx
+technisch_rapport_190204.docx

@@ -319,7 +319,7 @@ function renderProfile() {
       <button class="x" data-id="${p.id}" aria-label="Remove" title="Remove">&times;</button>
     </div>`).join("");
   $("#profileHint").textContent = profile.length
-    ? `${profile.length} perfume${profile.length>1?"s":""} in your profile — adjust a rating any time.`
+    ? `${profile.length} perfume${profile.length>1?"s":""} in your profile - adjust a rating any time.`
     : "No perfumes added yet.";
 }
 $("#profile").addEventListener("click", e => {
@@ -389,7 +389,7 @@ function renderChat(recs) {
   $("#reset").disabled = !history.length;
   if (!history.length) {
     c.innerHTML = `<p class="chat-empty">Tell me the occasion, the season, or notes you love or
-      want to avoid — or just hit "Recommend now".</p>`;
+      want to avoid - or just hit "Recommend now".</p>`;
     return;
   }
   history.forEach(m => addMsg(m.role === "user" ? "user" : "bot", m.content, false));

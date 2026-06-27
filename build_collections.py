@@ -5,7 +5,7 @@ Bouwt de split-collecties voor de recommender:
   - fragrances_reviews : 1 doc PER recensie -> met de parfum-url in de metadata (review-granulariteit)
 
 De catalogus komt uit de BESTAANDE `fragrances_ft`-collectie (de canonieke, gededupliceerde
-set die de notebook al opbouwde), zodat ids/urls exact gelijk blijven aan wat is uitgerold —
+set die de notebook al opbouwde), zodat ids/urls exact gelijk blijven aan wat is uitgerold -
 we doen de hele merge dus niet opnieuw. De ruwe reviews joinen we op `url` uit de Fragrantica-CSV's.
 
 Run:
@@ -127,9 +127,9 @@ def main() -> None:
 
     existing = [c.name for c in client.list_collections()]
 
-    # 3) fragrances_notes — 1 doc per parfum (alle 85k)
+    # 3) fragrances_notes - 1 doc per parfum (alle 85k)
     if NOTES_COLL in existing:
-        print(f"{NOTES_COLL}: bestaat al ({client.get_collection(NOTES_COLL).count():,}) — overslaan")
+        print(f"{NOTES_COLL}: bestaat al ({client.get_collection(NOTES_COLL).count():,}) - overslaan")
     else:
         nc = client.create_collection(NOTES_COLL, metadata={"hnsw:space": "cosine"})
         for s in range(0, len(cat), BATCH):
@@ -148,9 +148,9 @@ def main() -> None:
                 print(f"  notes: {min(s + BATCH, len(cat)):,}/{len(cat):,}")
         print(f"{NOTES_COLL}: klaar ({nc.count():,} docs)")
 
-    # 4) fragrances_reviews — 1 doc per recensie
+    # 4) fragrances_reviews - 1 doc per recensie
     if REVIEWS_COLL in existing:
-        print(f"{REVIEWS_COLL}: bestaat al ({client.get_collection(REVIEWS_COLL).count():,}) — overslaan")
+        print(f"{REVIEWS_COLL}: bestaat al ({client.get_collection(REVIEWS_COLL).count():,}) - overslaan")
     else:
         rc = client.create_collection(REVIEWS_COLL, metadata={"hnsw:space": "cosine"})
         bids, btxt, bmeta = [], [], []

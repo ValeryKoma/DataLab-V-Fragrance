@@ -6,7 +6,7 @@ Wat deze versie toevoegt t.o.v. de eerste:
   - BASE_MODEL = bge-BASE (768-dim) i.p.v. bge-small -> meer capaciteit voor nuance.
   - HARD NEGATIVES: i.p.v. alleen random in-batch negatives minen we per anchor een
     'near-miss' passage (parfum dat lijkt maar niet klopt). Daar leert het model de
-    fijne onderscheidingen van — de grootste kwaliteitswinst voor retrieval.
+    fijne onderscheidingen van - de grootste kwaliteitswinst voor retrieval.
   - IR-EVALUATOR + BEST-CHECKPOINT: review-als-query Recall@10 op een held-out set,
     elke epoch; het beste checkpoint wordt teruggeladen en opgeslagen.
   - BY-PERFUME SPLIT: eval-parfums zitten VOLLEDIG buiten de training (geen review- en
@@ -162,7 +162,7 @@ def mine(train_ds: Dataset, model: SentenceTransformer) -> Dataset:
     try:
         from sentence_transformers.util import mine_hard_negatives
     except ImportError:
-        print("LET OP: mine_hard_negatives niet beschikbaar — train zonder expliciete "
+        print("LET OP: mine_hard_negatives niet beschikbaar - train zonder expliciete "
               "hard negatives (alleen in-batch). Upgrade sentence-transformers voor de winst.")
         return train_ds
     print("hard negatives minen...")

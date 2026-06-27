@@ -92,7 +92,9 @@ _CUE_WORDS = (r"(?:no|not|nothing|none|without|avoid|avoiding|hates?|dislikes?|a
 _NEG_TERM = rf"(?!{_CUE_WORDS}\b)[a-z][a-z']+"
 # cue + 1 term, plus optioneel 'and/or/,'-gekoppelde extra termen ("no floral and musk").
 # Vulwoorden tussen cue en term die we overslaan ("no ANYTHING FROM cb" -> term 'cb').
-_FILLER = r"(?:too|so|very|any|anything|much|a\s+lot\s+of|from|of|the|some|something)\s+"
+_FILLER = (r"(?:too|so|very|any|anything|much|a\s+lot\s+of|from|of|the|some|something|"
+           r"with|containing|that\s+(?:has|have|contains?)|has|have|contains?|"
+           r"perfumes?|scents?|fragrances?|colognes?|smells?|notes?|ones?|things?|an?)\s+")
 _NEG_RE = re.compile(
     rf"\b{_NEG_CUE}\b[\s,]*(?:{_FILLER})*"
     rf"(?P<terms>{_NEG_TERM}(?:\s*(?:,|and|or|&)\s*{_NEG_TERM}){{0,3}})",

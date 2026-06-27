@@ -1,4 +1,4 @@
-# Fragrance recommender — dependencies
+# Fragrance recommender - dependencies
 # Python 3.13. Torch is CPU-only in deze omgeving; voor fine-tunen (zie
 # finetune_embeddings.py) is een CUDA-build van torch nodig.
 
