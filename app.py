@@ -1,19 +1,9 @@
 """
 Fragrance Advisor - FastAPI backend.
 
-Gebruikt `Recommender` (recommender.py), zodat de webapp en de notebook 
-dezelfde retrieval/ranking gebruiken. Dit bestand voegt alleen de web-laag toe:
-zoeken, het gesprek (advisor) en het serveren van de frontend.
-
-De LLM-backend wissel je met één regel: `LLM_BACKEND = "ollama"` of `"openai"` (zie config).
-
-Run (lokaal, Ollama):
-    pip install fastapi uvicorn
-    ollama run qwen2.5:7b        # Ollama moet draaien
-    python app.py               # open http://127.0.0.1:8000
-
-Run (OpenAI):
-    zet LLM_BACKEND = "openai" en plak je key in OPENAI_API_KEY (config), dan: python app.py
+Weblaag bovenop Recommender (recommender.py): zoeken, het advisor-gesprek en de
+frontend. LLM-backend wisselbaar via LLM_BACKEND ("ollama" of "openai").
+Run: python app.py  ->  http://127.0.0.1:8000
 """
 from __future__ import annotations
 
@@ -59,8 +49,7 @@ _LLM      = LLM_BACKENDS[LLM_BACKEND]
 LLM_MODEL = _LLM["model"]
 
 # startup
-# Zorg dat relative paden (./chroma_db, ./models, static) altijd kloppen, ongeacht
-# vanuit welke map de app gestart wordt (tunnel/service/achtergrond).
+# relative paden (./chroma_db, ./models, static) werken ongeacht van waar je start
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 print("Embedding-model laden...")
@@ -111,9 +100,8 @@ REC_SYS = (
 )
 
 def conversation_query(history: list[dict], profile: list[dict]) -> tuple[str, list[str]]:
-    # Alleen LIKES in de tekstquery: een embedding snapt 'vermijd X' niet (zou juist
-    # naar X trekken). Negaties halen we deterministisch uit de tekst (parse_negations)
-    # en enforce'n we als harde filter in Recommender - niet via embedding of prompt.
+    # Alleen likes in de tekstquery; negaties los via parse_negations (harde filter),
+    # want een embedding snapt 'vermijd X' niet en trekt juist naar X.
     likes = [f"{rec.id2meta[p['id']]['title']}: {rec.id2meta[p['id']].get('notes', '')}"
              for p in profile if p["id"] in rec.id2meta and p["rating"] >= 4]
     raw_wants = " ".join(m["content"] for m in history if m["role"] == "user")
@@ -122,21 +110,15 @@ def conversation_query(history: list[dict], profile: list[dict]) -> tuple[str, l
     return (head + "Looking for: " + wants).strip(), excludes
 
 
-# Een advisor-turn mag GEEN parfums noemen (geen catalogus -> hallucinatie). Markers die
-# verraden dat het model tóch een lijst begint, knippen we deterministisch weg.
+# Advisor mag geen parfums noemen (zou hallucineren); knip een beginnende lijst weg.
 _LIST_CUT_RE = re.compile(r"(?:\n\s*\d+[.)]\s)|one short intro|numbered list|here (?:are|is)",
                           re.I)
 
 
 def interpret_advisor(raw: str) -> tuple[str, bool]:
-    """Beslist op basis van de advisor-output of we aanbevelen, en saniteert de tekst.
-    Qwen-7B negeert soms de instructie en verzint een parfumlijst tijdens het vragen;
-    dat vangen we hier structureel af (niet via de prompt):
-      - [RECOMMEND]                      -> aanbevelen, advisor-tekst weggooien
-      - anders: knip alles vanaf een lijst-marker af
-        - blijft er een vraag over       -> toon alleen die ene vraag
-        - geen vraag (model ging off-script) -> behandel als 'aanbevelen' (grounded pad)
-    """
+    """Bepaalt uit de advisor-output of we aanbevelen, en schoont de tekst op:
+    [RECOMMEND] -> aanbevelen; anders knip een lijst weg en toon de vraag, of val
+    terug op aanbevelen als het model off-script ging."""
     if "[RECOMMEND]" in raw:
         return "", True
     cut = _LIST_CUT_RE.search(raw)

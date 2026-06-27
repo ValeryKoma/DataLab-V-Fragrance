@@ -265,18 +265,11 @@ for i, (idx, row) in enumerate(df_filled_rating.iterrows(), start=1):
 
 print(f"Done. Saved {CHECKPOINT_PATH}")
 
-# Parfumo Scraper – Missing Rating Enrichment
-# This script enriches a Fragrantica perfume dataset by filling in missing ratings using data scraped from Parfumo.com.
-# Problem it solves:
-# The original dataset contains thousands of perfumes with no rating data. Rather than discarding these entries, the script cross-references each one against Parfumo to retrieve a rating, rating count, and normalized score - and opportunistically fills in missing descriptions and reviews as well.
-# Key technical challenges tackled:
-
-# URL reconstruction - Parfumo has no API, so valid profile URLs are reverse-engineered from the designer and title fields. This involves stripping gender suffixes ("for women/men"), removing brand names from titles, and generating two slug formats (hyphenated lowercase vs. capitalized underscores) that Parfumo uses inconsistently across old and new entries.
-# Anti-bot evasion - The scraper mimics real browser behavior using curl_cffi for TLS fingerprint spoofing at the TCP handshake level, which defeats checks that inspect the TLS ClientHello (something requests cannot do). Browser profiles are rotated every 15–35 requests with matching HTTP headers (Accept, Accept-Language, Sec-Fetch-*, Cache-Control, viewport metadata) so each session looks like a different user on a different machine. Referer headers are rotated between Google, Fragrantica, and Parfumo itself to simulate realistic navigation paths.
-# Session warmup - Each new session visits the Parfumo homepage before scraping, which acquires session cookies and builds a browsing history. Jumping straight to deep product pages without any prior cookies is a strong bot signal that many sites actively check for.
-# Non-uniform delays - Delays between requests use random.triangular() rather than a uniform distribution, which produces a more human-like skew toward shorter pauses with occasional longer ones. On top of that, 12% of requests randomly trigger a longer "distracted user" pause (30–65s) and 5% simulate a fast impulsive click (3–7s), making the timing pattern statistically harder to fingerprint.
-# Request timeouts - Every HTTP request has an explicit timeout=20s. Without this, a single unresponsive server can hang the entire script indefinitely - especially problematic in a long overnight scrape across thousands of entries.
-# Rate limit handling - HTTP 429 responses trigger an automatic backoff with proportionally increasing wait times (120s + 60s per failed attempt) before retrying, rather than crashing or silently skipping entries.
-# Retry logic - Each request is attempted up to 3 times with randomized delays between attempts, handling transient network errors, dropped connections, and temporary server-side issues without losing the entry entirely.
-# False-positive 200 detection - Parfumo returns HTTP 200 even for non-existent pages, setting the page title to "404" instead of using a proper status code. The script explicitly checks the page title after every request to distinguish a real result from a silent miss.
+# Parfumo scraper - vult ontbrekende ratings/reviews aan vanuit Parfumo.
+# Kort:
+#   - URL's reconstrueren uit designer + title (Parfumo heeft geen API)
+#   - anti-bot: curl_cffi TLS-spoofing, roterende browserprofielen + headers, session warmup
+#   - mensachtige delays (random.triangular), 429-backoff, timeout en 3x retry per request
+#   - false-positive 200: paginatitel "404" wordt apart afgevangen
+#   - checkpoint elke 50 rijen -> hervatbaar
 # Fault tolerance & resumability - Progress is checkpointed to CSV every 50 rows. Already-scraped URLs are tracked and skipped on restart, so the script can be stopped and resumed at any point - essential when scraping thousands of entries over multiple sessions.

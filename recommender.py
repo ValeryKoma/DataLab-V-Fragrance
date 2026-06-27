@@ -1,20 +1,10 @@
 """
-Gedeelde retrieval-core voor de fragrance recommender.
+Gedeelde retrieval-core (zowel de notebook als app.py gebruiken deze Recommender).
 
-Eén bron van waarheid: zowel de notebook (lab/evaluatie) als de webapp (app.py)
-gebruiken exact dezelfde `Recommender`. De catalogus + BM25-index worden geladen
-uit de notes-collectie, dus de module heeft geen pandas-`df` nodig.
-
-Split-retrieval (optioneel): naast de notes-collectie (1 doc/parfum, alle ~85k) kan een
-reviews-collectie (1 doc per recensie) worden meegegeven. Beide worden bevraagd en
-gefuseerd, zodat experiëntieel signaal uit reviews meetelt zonder de notes-only parfums
-te benadelen (coverage-aware RRF + fairness-multiplier).
-
-Pipeline (hybride, gepersonaliseerd):
-  query-tekst -> (optionele) query-expansion -> embedding
-  + smaakprofiel (Rocchio: likes trekken aan, dislikes stoten af)
-  -> notes vector-pass  +  reviews vector-pass  +  BM25-pass  -> coverage-aware RRF
-  -> lichte community-rating-nudge -> top-k
+Hybride, gepersonaliseerde pipeline:
+  query -> embedding + smaakprofiel (Rocchio) -> notes- + reviews- + BM25-pass
+  -> RRF-fusie -> lichte rating-nudge -> top-k.
+Catalogus en BM25-index komen uit de notes-collectie; een reviews-collectie is optioneel.
 """
 from __future__ import annotations
 
@@ -56,14 +46,11 @@ def expand_query(q: str) -> str:
 
 
 # ---------------------------------------------------------------- negatie / exclusions
-# Harde constraints horen NIET in de embedding of de prompt thuis: "geen zoet" embedt
-# juist richting zoet (het woord staat er nu eenmaal). We parsen negatie deterministisch
-# uit de tekst en filteren de kandidaten in Python (na retrieval), zodat een uitgesloten
-# note structureel nooit in de aanbeveling kan belanden.
+# Harde uitsluiting hoort niet in de embedding ("geen zoet" trekt juist naar zoet);
+# we parsen negatie uit de tekst en filteren de kandidaten na retrieval.
 
-# Categoriewoord -> note-/merk-ROOTS die we eruit filteren. Prefix-match (len >= 4), dus
-# 'vanil' vangt ook 'vanilla'/'vanila'/'vanille' (spelfouten in de data), 'spic' vangt
-# spicy/spice/spices, enz. Occasion-woorden als 'office'/'date' horen hier niet bij.
+# Categoriewoord -> note-/merk-roots. Prefix-match (len >= 4): 'vanil' vangt ook
+# 'vanilla'/'vanille' (en spelfouten in de data).
 EXCLUDE_SYNONYMS = {
     "sweet":   ["sweet", "sugar", "vanil", "caramel", "honey", "tonka", "gourmand",
                 "candy", "marshmallow", "chocolat", "cocoa", "praline", "toffee",
@@ -82,16 +69,14 @@ EXCLUDE_SYNONYMS = {
     "animalic": ["animalic", "civet", "castoreum", "oud", "leather"],
 }
 
-# Negatie-cues: woorden die aangeven dat het volgende begrip vermeden moet worden.
+# negatie-cues: woorden die aangeven dat het volgende vermeden moet worden
 _NEG_CUE = (r"(?:no|not|nothing|none|without|avoid(?:ing)?|hates?|dislikes?|anti|"
             r"don'?t\s+(?:like|want)|do\s+not\s+(?:like|want)|can'?t\s+stand)")
-# Een term is geen cue-woord: zo absorbeert "no sweet and no fruity" de tweede 'no' niet
-# als note, en kan de tweede negatie zelf matchen (en 'fruity' alsnog uitsluiten).
+# een term mag zelf geen cue-woord zijn, zodat "no sweet and no fruity" beide vangt
 _CUE_WORDS = (r"(?:no|not|nothing|none|without|avoid|avoiding|hates?|dislikes?|anti|"
               r"and|or)")
 _NEG_TERM = rf"(?!{_CUE_WORDS}\b)[a-z][a-z']+"
-# cue + 1 term, plus optioneel 'and/or/,'-gekoppelde extra termen ("no floral and musk").
-# Vulwoorden tussen cue en term die we overslaan ("no ANYTHING FROM cb" -> term 'cb').
+# vulwoorden tussen cue en term die we overslaan ("no anything from cb" -> 'cb')
 _FILLER = (r"(?:too|so|very|any|anything|much|a\s+lot\s+of|from|of|the|some|something|"
            r"with|containing|that\s+(?:has|have|contains?)|has|have|contains?|"
            r"perfumes?|scents?|fragrances?|colognes?|smells?|notes?|ones?|things?|an?)\s+")
@@ -104,12 +89,9 @@ _CONNECTOR_RE = re.compile(r"\s*(?:,|\band\b|\bor\b|&)\s*", re.I)
 
 
 def parse_negations(text: str) -> tuple[str, list[str]]:
-    """Splitst vrije tekst in (schone_tekst, exclude-termen).
-    'office, nothing sweet, I hate sweet, I want fresh' -> ('office, I want fresh',
-    ['sweet']); 'avoid floral and musk' -> ('', ['floral', 'musk']). De clausule wordt
-    uit de tekst gehaald zodat de embedding niet alsnog richting de uitgesloten note
-    drijft. Heuristisch: overcapture is onschadelijk, want het filter matcht alleen op
-    echte note-woorden (een term die geen note is, valt simpelweg nergens op)."""
+    """Splitst vrije tekst in (schone_tekst, exclude-termen), bv.
+    'office, nothing sweet' -> ('office', ['sweet']). De negatie-clausule wordt uit de
+    tekst gehaald zodat de embedding niet alsnog naar de uitgesloten note drijft."""
     excludes: list[str] = []
 
     def _grab(m: "re.Match") -> str:
@@ -141,10 +123,8 @@ def expand_excludes(terms: list[str] | None) -> set[str]:
 
 
 def excluded_by(text: str, excl: set[str]) -> bool:
-    """True als een uitgesloten root in `text` voorkomt. Token-prefix-match (len >= 4),
-    zodat spelvarianten/meervouden meegaan ('vanil' -> 'vanila'); korte termen als 'cb'
-    of 'oud' matchen exact. `text` is hier notes + title + brand samen, zodat een
-    uitgesloten merk ('cb') of een naam als 'Sweet Love' ook wordt afgevangen."""
+    """True als een uitgesloten root in `text` voorkomt (prefix-match len >= 4, korte
+    termen exact). `text` = notes + title + brand, zodat ook merk/naam wordt afgevangen."""
     if not excl:
         return False
     for tok in tokenize(text):
@@ -166,8 +146,7 @@ class Recommender:
         self.model = model
         self.query_prefix = query_prefix   # "" zetten voor niet-bge modellen
 
-        # Catalogus (metadata) gepagineerd inladen: alles in een keer knalt tegen
-        # de SQLite-variabelenlimiet bij ~35k rijen.
+        # catalogus gepagineerd inladen (alles ineens raakt de SQLite-limiet)
         cat = []
         n = collection.count()
         for off in range(0, n, page):
@@ -196,9 +175,8 @@ class Recommender:
 
     # -------------------------------------------------- smaakprofiel
     def profile_vector(self, profile: list[dict]):
-        """Rocchio-achtige voorkeursvector uit (id, cijfer).
-        Cijfer 1..5 -> gewicht (cijfer - 3): laag stoot af, hoog trekt aan, 3 = neutraal.
-        Elke embedding wordt eerst genormaliseerd zodat alleen de richting meetelt."""
+        """Rocchio-smaakvector uit (id, cijfer): gewicht = cijfer - 3 (laag stoot af,
+        hoog trekt aan). Embeddings genormaliseerd zodat alleen de richting telt."""
         if not profile:
             return None
         got = self.collection.get(ids=[p["id"] for p in profile], include=["embeddings"])
@@ -225,21 +203,17 @@ class Recommender:
                   reviews: bool = True, review_weight: float = 1.0, review_fairness: float = 1.0,
                   expand: bool = True, rrf_k: int = 60, pool: int = 200) -> pd.DataFrame:
         """
-        query         : vrije tekst (zoekopdracht of samenvatting van het gesprek)
-        profile       : [{'id', 'rating'}] smaakprofiel; None = onpersoonlijk zoeken
-        gender        : 'men'|'women'|'unisex'|None  (ChromaDB where-filter)
-        exclude_notes : harde constraint; kandidaten waarvan notes/naam/merk een van deze
-                        termen bevat (uitgebreid via EXCLUDE_SYNONYMS, prefix-match) vallen
-                        af. Vangt zowel notes ('sweet'->vanil...), namen ('Sweet Love') als
-                        merken ('cb'). Deterministische enforcement, niet via embedding/prompt.
+        query         : vrije tekst
+        profile       : [{'id','rating'}] smaakprofiel; None = onpersoonlijk
+        gender        : 'men'|'women'|'unisex'|None
+        exclude_notes : harde uitsluiting (notes/naam/merk), via EXCLUDE_SYNONYMS
         alpha         : gewicht query-tekst t.o.v. smaakprofiel (0..1)
-        rating_weight : lichte nudge van de community-rating in de eindscore (0 = uit)
-        use_bm25      : hybride (vector + BM25) of puur vector (False)
-        reviews       : reviews-collectie meenemen (split-retrieval) als die meegegeven is
-        review_weight : gewicht van de reviews-pass in de RRF (1.0 = gelijk aan de notes-pass)
-        review_fairness: multiplier (>1) voor parfums ZONDER reviews, zodat de niche-47k niet
-                         structureel onder mainstream zakt; 1.0 = uit (tune in eval, cel 5f)
-        expand        : VIBE_HINTS query-expansion aan/uit
+        rating_weight : lichte community-rating-nudge (0 = uit)
+        use_bm25      : hybride (vector + BM25) of puur vector
+        reviews       : reviews-collectie meenemen als die er is
+        review_weight : gewicht reviews-pass in de RRF
+        review_fairness: multiplier (>1) voor parfums zonder reviews; 1.0 = uit
+        expand        : query-expansion aan/uit
         """
         profile = profile or []
         excl = expand_excludes(exclude_notes)
@@ -293,10 +267,8 @@ class Recommender:
                 if len(bm_urls) >= pool:
                     break
 
-        # 4) Coverage-aware Reciprocal Rank Fusion.
-        # notes + BM25 dekken alle parfums; de reviews-pass alleen de ~38% met reviews.
-        # review_fairness (>1) tilt parfums ZONDER reviews op, zodat ze niet structureel onder
-        # mainstream parfums zakken puur omdat ze geen review-signaal hebben.
+        # 4) Reciprocal Rank Fusion. notes + BM25 dekken alles, reviews maar een deel;
+        # review_fairness tilt parfums zonder reviews op zodat ze niet structureel zakken.
         rrf = defaultdict(float)
         for r, u in enumerate(vec_urls):
             rrf[u] += 1.0 / (rrf_k + r)
@@ -335,8 +307,7 @@ class Recommender:
             })
         rows.sort(key=lambda r: r["score"], reverse=True)
 
-        # Dedup op (title, brand): hetzelfde parfum staat soms onder twee Fragrantica-URLs
-        # (de RRF-dict is url-gekeyd, dus dedup op url alleen liet die dubbel staan).
+        # dedup op (title, brand): zelfde parfum staat soms onder twee URLs
         seen, deduped = set(), []
         for r in rows:
             key = (str(r["title"]).strip().lower(), str(r["brand"]).strip().lower())

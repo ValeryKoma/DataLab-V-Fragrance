@@ -1,16 +1,10 @@
 """
-Bouwt de split-collecties voor de recommender:
+Bouwt de split-collecties:
+  - fragrances_notes   : 1 doc per parfum  ("title. Brand: ... Notes: ...")
+  - fragrances_reviews : 1 doc per recensie (parfum-url in de metadata)
 
-  - fragrances_notes   : 1 doc per parfum  -> "title. Brand: …. Notes: …."  (== fine-tune positive)
-  - fragrances_reviews : 1 doc PER recensie -> met de parfum-url in de metadata (review-granulariteit)
-
-De catalogus komt uit de BESTAANDE `fragrances_ft`-collectie (de canonieke, gededupliceerde
-set die de notebook al opbouwde), zodat ids/urls exact gelijk blijven aan wat is uitgerold -
-we doen de hele merge dus niet opnieuw. De ruwe reviews joinen we op `url` uit de Fragrantica-CSV's.
-
-Run:
-    python build_collections.py
-    # daarna draait app.py automatisch op de split (zie de fallback in app.py)
+Catalogus komt uit de bestaande fragrances_ft-collectie (zodat ids/urls gelijk blijven);
+ruwe reviews joinen we op url uit de Fragrantica-CSV's. Run: python build_collections.py
 """
 from __future__ import annotations
 

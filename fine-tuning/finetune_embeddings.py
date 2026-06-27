@@ -1,24 +1,13 @@
 """
-Fine-tune een bi-encoder op (review -> parfum-passage) paren, fragrance-aware.
-Vereist GPU + CUDA-torch.
+Fine-tune een bi-encoder op (review -> parfum-passage) paren. Vereist GPU.
 
-Wat deze versie toevoegt t.o.v. de eerste:
-  - BASE_MODEL = bge-BASE (768-dim) i.p.v. bge-small -> meer capaciteit voor nuance.
-  - HARD NEGATIVES: i.p.v. alleen random in-batch negatives minen we per anchor een
-    'near-miss' passage (parfum dat lijkt maar niet klopt). Daar leert het model de
-    fijne onderscheidingen van - de grootste kwaliteitswinst voor retrieval.
-  - IR-EVALUATOR + BEST-CHECKPOINT: review-als-query Recall@10 op een held-out set,
-    elke epoch; het beste checkpoint wordt teruggeladen en opgeslagen.
-  - BY-PERFUME SPLIT: eval-parfums zitten VOLLEDIG buiten de training (geen review- en
-    geen passage-leakage), zodat de cijfers echte generalisatie meten.
-  - CachedMultipleNegativesRankingLoss (GradCache): groot effectief batch (= veel
-    negatives) op beperkte VRAM, door mini-batch gewijs te cachen.
+- BASE_MODEL = bge-base (768-dim)
+- hard negatives: per anchor een 'near-miss' passage minen (naast in-batch negatives)
+- by-perfume split: eval-parfums volledig buiten de training (geen leakage)
+- CachedMultipleNegativesRankingLoss: groot effectief batch op beperkte VRAM
+- IR-evaluator (Recall@10 op held-out) per epoch; beste checkpoint wordt bewaard
 
-Gebruik:
-    pip install "sentence-transformers>=3.0" datasets
-    python finetune_embeddings.py
-    # daarna, als de eval beter is: zet EMBED_MODEL op "./models/bge-fragrance-v2"
-    # in app.py / build_collections.py / de notebook en herbouw de collecties.
+Gebruik: python finetune_embeddings.py  ->  models/bge-fragrance-v2
 """
 from __future__ import annotations
 
@@ -40,7 +29,7 @@ from sentence_transformers.evaluation import InformationRetrievalEvaluator
 
 # ---------------------------------------------------------------- config
 BASE_MODEL   = "BAAI/bge-base-en-v1.5"
-OUT_DIR      = "./models/bge-fragrance-v2"     # nieuw pad: clobbert de huidige niet
+OUT_DIR      = "./models/bge-fragrance-v2"     # fine-tuned model komt hier
 QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
 
 FILES = [
@@ -58,7 +47,7 @@ MAX_PAIRS_PER_PERFUME = 4       # train-paren per parfum
 MAX_SEQ_LEN           = 128
 
 EPOCHS      = 2
-BATCH       = 128              # effectief aantal in-batch negatives (CachedMNRL maakt dit haalbaar)
+BATCH       = 128              # effectief aantal in-batch negatives
 MINI_BATCH  = 16              # past-in-VRAM brok; verlaag bij OOM
 LR          = 2e-5
 
@@ -72,7 +61,7 @@ RECALL_KEY = "frag_cosine_recall@10"   # metric-naam van de IR-evaluator (name="
 _WS = re.compile(r"\s+")
 
 
-# ---------------------------------------------------------------- helpers
+#  helpers
 def clean(t) -> str:
     return _WS.sub(" ", html.unescape(str(t))).strip()
 
