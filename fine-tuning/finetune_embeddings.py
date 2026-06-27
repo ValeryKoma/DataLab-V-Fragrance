@@ -170,7 +170,7 @@ def mine(train_ds: Dataset, model: SentenceTransformer) -> Dataset:
     )
 
 
-# ---------------------------------------------------------------- train
+#  train
 def main() -> None:
     random.seed(SEED)
     torch.manual_seed(SEED)
